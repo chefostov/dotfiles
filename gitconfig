@@ -1,0 +1,5 @@
+[user]
+	name = Stefan Stoilov
+	email = chefostov@gmail.com
+[core]
+	editor = nvim
