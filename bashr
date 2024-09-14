@@ -8,16 +8,26 @@ case $- in
       *) return;;
 esac
 
-# don't put duplicate lines or lines starting with space in the history.
-# See bash(1) for more options
-HISTCONTROL=ignoreboth
+# No clutter in the home directory
+HISTFILE="$HOME/.local/share/bash/history"
 
-# append to the history file, don't overwrite it
+# Append history instead of overwriting
 shopt -s histappend
 
-# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
+# Infinite session history
+HISTSIZE=-1
+
+# Infinite history file
+HISTFILESIZE=-1
+
+# Don't store commands that aren't useful in history
+HISTIGNORE='exit:history:l:l[1als]:lla:+(.)'
+
+# Ignore commands starting with space, and duplicates
+HISTCONTROL='ignoreboth'
+
+# Save each command right after execution
+export PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
@@ -40,6 +50,23 @@ case "$TERM" in
     xterm-color|*-256color) color_prompt=yes;;
 esac
 
+# Функция за проверка на Git статус
+git_branch_status() {
+  # Проверяваме дали сме в Git репо
+  if git rev-parse --git-dir > /dev/null 2>&1; then
+    # Вземаме името на текущия бранч
+    branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+    # Проверяваме за промени (ако има, добавяме символ )
+    if [ -n "$(git status --porcelain)" ]; then
+      echo "$branch  "  # Променен бранч с иконка
+    else
+      echo "$branch "  # Чист бранч, без промени
+    fi
+  fi
+}
+
+
 # uncomment for a colored prompt, if the terminal has the capability; turned
 # off by default to not distract the user: the focus in a terminal window
 # should be on the output of commands, not on the prompt
@@ -57,7 +84,7 @@ if [ -n "$force_color_prompt" ]; then
 fi
 
 if [ "$color_prompt" = yes ]; then
-    PS1='\[\e[1m\]\W\[\e[0m\] \[\e[38;5;161m\]󱋴\[\e[0m\] '
+    PS1='$(git_branch_status)\[\e[1m\]\W\[\e[0m\] \[\e[38;5;161m\]󱋴\[\e[0m\]  '
 else
     PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 fi
