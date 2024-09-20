@@ -117,8 +117,23 @@ fi
 # some more ls aliases
 alias ll='exa -lah --color=always --group-directories-first --icons'
 alias ls='exa -a --color=always --group-directories-first --icons'
-alias most='cat ~/.bash_history | sort |uniq -c|sort -nr|head -n 10'
-#alias l='ls -CF'
+alias most='cat $HOME/.local/share/bash/history| sort |uniq -c|sort -nr|head -n 10'
+alias meminfo='free -m -l -t'  # Показва информация за използваната памет
+alias duh='du -h --max-depth=1'  # Показване на размера на директориите
+
+# Търсене в bash историята
+hist_search() {
+  history | grep "$1" | less
+}
+
+# Стартиране на бележките с неовим и лейф греп
+alias hs='hist_search'
+
+function notes() {
+    cd $HOME/doc/notes || return
+    nvim +'lua require("telescope.builtin").live_grep()'
+}
+
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
