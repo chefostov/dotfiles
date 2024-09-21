@@ -33,13 +33,12 @@ require("lazy").setup({
     config = function()
       require('gitsigns').setup {
         signs = {
-          add          = { text = '│' },  -- Махни депрекираните 'hl', 'numhl', и 'linehl' опции
-          change       = { text = '│' },
-          delete       = { text = '_' },
-          topdelete    = { text = '‾' },
+          add          = { text = '│' },
+          change       = { text = '󰚉' },
+          delete       = { text = '󱔷' },
+          topdelete    = { text = '󰈘' },
           changedelete = { text = '~' },
         },
-        -- Други настройки...
         current_line_blame = true,  -- Показва вината за текущия ред
       }
 
