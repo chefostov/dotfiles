@@ -29,6 +29,27 @@ require("lazy").setup({
                 "MunifTanjim/nui.nvim",          -- NUI библиотеката (липсващата зависимост)
 	}},
     {
+    'lewis6991/gitsigns.nvim',
+    config = function()
+      require('gitsigns').setup {
+        signs = {
+          add          = { text = '│' },  -- Махни депрекираните 'hl', 'numhl', и 'linehl' опции
+          change       = { text = '│' },
+          delete       = { text = '_' },
+          topdelete    = { text = '‾' },
+          changedelete = { text = '~' },
+        },
+        -- Други настройки...
+        current_line_blame = true,  -- Показва вината за текущия ред
+      }
+
+      -- Настройка на highlight групите за Git статусите
+      vim.api.nvim_set_hl(0, 'GitSignsAdd', { fg = '#00ff00' })  -- Зелен за добавени редове
+      vim.api.nvim_set_hl(0, 'GitSignsChange', { fg = '#ffff00' })  -- Жълт за променени редове
+      vim.api.nvim_set_hl(0, 'GitSignsDelete', { fg = '#ff0000' })  -- Червен за изтрити редове
+    end
+},
+    {
   "christoomey/vim-tmux-navigator",
   cmd = {
     "TmuxNavigateLeft",
