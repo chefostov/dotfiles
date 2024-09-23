@@ -151,3 +151,4 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
