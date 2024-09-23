@@ -520,14 +520,19 @@ awful.rules.rules = {
 	-- Add titlebars to normal clients and dialogs
 	{ rule_any = { type = { "normal", "dialog" } }, properties = { titlebars_enabled = false } },
 
-	-- Remove icons from menu
-
+	-- Set google chrome to always map on the tag named "2" on screen 1.
 	-- Set Firefox to always map on the tag named "2" on screen 1.
-	-- { rule = { class = "Firefox" },
-	--   properties = { screen = 1, tag = "2" } },
+	-- Set code to always map on the tag named "3" on screen 1.
+	-- Set Gimp to always map on the tag named "4" on screen 1.
+	-- And so on.
+	{ rule = { instance = "google-chrome" }, properties = { tag = "󰖟 web" }, callback = function(c)
+		naughty.notify({ title = "Chrome", text = "Google Chrome has been started!" })
+	end },
+	{ rule = { class = "Firefox" }, properties = { tag = "󰖟 web" } },
+	{ rule = { class = "Code" }, properties = { tag = "󰅨 dev" } },
+	{ rule = { class = "Gimp" }, properties = { tag = " gfx" } },
 }
 -- }}}
-
 -- {{{ Signals
 -- Signal function to execute when a new client appears.
 client.connect_signal("manage", function(c)
@@ -580,6 +585,94 @@ client.connect_signal("request::titlebars", function(c)
 		layout = wibox.layout.align.horizontal,
 	})
 end)
+
+
+-- This script modifies the behavior of tags in the Awesome Window Manager to hide empty tags.
+-- It overrides certain functions and connects to various signals to update the visibility of tags based on their client content.
+
+-- Functions:
+-- - gettags(screen): Returns a list of tags for the given screen, marking empty tags as hidden.
+-- - uc(c): Updates the hidden status of tags for the screen of the given client.
+-- - ut(s, t): Updates the hidden status of tags for the given screen index.
+
+-- Signal Connections:
+-- - Connects to the "unmanage" signal of clients to update tag visibility.
+-- - Connects to the "new" signal of clients to update tag visibility when a client is moved between screens or tagged/untagged.
+-- - Connects to the "property::selected" signal of tags to update tag visibility when a tag is selected.
+-- - Connects to the "tag::history::update" signal of screens to update tag visibility when the tag history changes.
+-- Function to hide empty tags
+local ipairs = ipairs
+local pairs = pairs
+local awful = require("awful")
+local naughty = require("naughty")
+local table = table
+local capi = {
+	tag = tag,
+	mouse = mouse,
+	client = client,
+	screen = screen,
+	wibox = wibox,
+	timer = timer,
+	keygrabber = keygrabber,
+}
+
+-- Grab the original functions we're replacing
+local orig = {
+	viewidx = awful.tag.viewidx,
+
+	taglist = awful.widget.taglist.new,
+}
+
+-- Return tags with stuff on them, mark others hidden
+local gettags = function(screen)
+	local tags = {}
+	local add_tag = true
+	local new_tag = nil
+
+	for k, t in ipairs(awful.tag.gettags(screen)) do
+		local has_clients = (#t:clients() > 0)
+		if has_clients then
+			add_tag = t.selected
+			new_tag = nil
+		end
+		if t.selected or has_clients then
+			awful.tag.setproperty(t, "hide", false)
+			table.insert(tags, t)
+		else
+			awful.tag.setproperty(t, "hide", true)
+			if add_tag and new_tag == nil then
+				new_tag = t
+			end
+		end
+	end
+
+	if add_tag and new_tag ~= nil then
+		awful.tag.setproperty(new_tag, "hide", false)
+		table.insert(tags, new_tag)
+	end
+
+	return tags
+end
+
+-- Update hidden status
+local function uc(c)
+	gettags(c.screen)
+end
+local function ut(s, t)
+	gettags(s.index)
+end
+
+capi.client.connect_signal("unmanage", uc)
+capi.client.connect_signal("new", function(c)
+	c:connect_signal("property::screen", uc)
+	c:connect_signal("tagged", uc)
+	c:connect_signal("untagged", uc)
+end)
+
+for screen = 1, capi.screen.count() do
+	awful.tag.attached_connect_signal(screen, "property::selected", uc)
+	capi.screen[screen]:connect_signal("tag::history::update", ut)
+end
 
 -- Enable sloppy focus, so that focus follows mouse.
 client.connect_signal("mouse::enter", function(c)
@@ -664,4 +757,5 @@ function menubar.hide(...)
 end
 
 return kbdlayout
+
 -- }}}
