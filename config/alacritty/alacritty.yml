@@ -1,0 +1,65 @@
+# Настройки за прозорец
+window:
+  opacity: 0.8  # Стойност между 0 и 1 за задаване на прозрачност (1 = без прозрачност)
+  dynamic_title: true  # Променя заглавието на прозореца динамично
+  dynamic_padding: true
+  padding:
+    x: 20
+    y: 20 
+
+ # Настройки за прозорец
+cursor:
+  style:
+    shape: Block  # Можеш да избереш между Block, Beam, Underline
+    blink: true   # Можеш да включиш или изключиш мигането на курсора
+
+# Настройки за шрифт
+font:
+  normal:
+    family: FiraCode  # Можеш да използваш предпочитан шрифт (например FiraCode)
+    style: Retina
+  size: 9.5  # Размер на шрифта
+  offset:
+    x: 0
+    y: 2
+
+enable_experimental_concurrent_rendering: true
+
+# Настройки за скролиране
+scrolling:
+  history: 2000  # Брой редове, които да запази в историята на скролирането
+
+# Автоматично скриване на курсора на мишката
+mouse:
+  hide_when_typing: true
+
+# Цветова схема (Tokyo Night)
+colors:
+  primary:
+    background: '#1a1b26'
+    foreground: '#c0caf5'
+
+  cursor:
+    text: '#1a1b26'
+    cursor: '#c0caf5'
+
+  normal:
+    black:   '#15161e'
+    red:     '#f7768e'
+    green:   '#9ece6a'
+    yellow:  '#e0af68'
+    blue:    '#7aa2f7'
+    magenta: '#bb9af7'
+    cyan:    '#7dcfff'
+    white:   '#a9b1d6'
+
+  bright:
+    black:   '#414868'
+    red:     '#f7768e'
+    green:   '#9ece6a'
+    yellow:  '#e0af68'
+    blue:    '#7aa2f7'
+    magenta: '#bb9af7'
+    cyan:    '#7dcfff'
+    white:   '#c0caf5'
+
