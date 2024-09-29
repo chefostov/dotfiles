@@ -196,7 +196,7 @@ awful.screen.connect_for_each_screen(function(s)
 	set_wallpaper(s)
 
 	-- Each screen has its own tag table.
-	awful.tag({ "󰅨 dev", "󰖟 web", " gfx", " tmp" }, s, awful.layout.layouts[1])
+	awful.tag({ " dev", " web", " gfx", " tmp" }, s, awful.layout.layouts[1])
 
 	-- Create a promptbox for each screen
 	s.mypromptbox = awful.widget.prompt()
@@ -402,6 +402,132 @@ clientkeys = gears.table.join(
 		c:raise()
 	end, { description = "(un)maximize horizontally", group = "client" })
 )
+-- Custom keymaps
+globalkeys = gears.table.join(
+	globalkeys,
+	awful.key({ modkey }, "o", function()
+		awful.spawn.with_shell("bash ~/bin/picom-toggle.sh")
+	end, { description = "Toggle picom transparency", group = "custom" })
+)
+
+-- Volume Control with XF86Audio Keys:
+-- - Lower Volume: Binds the XF86AudioLowerVolume key to decrease the volume by 5% and display a notification with the current volume level.
+-- - Raise Volume: Binds the XF86AudioRaiseVolume key to increase the volume by 5% and display a notification with the current volume level.
+-- - Mute/Unmute: Binds the XF86AudioMute key to toggle mute on the default audio sink and display a notification indicating whether the audio is muted.
+-- 
+-- Playback Control with cmus-remote:
+-- - Play/Pause: Binds the XF86AudioPlay key to toggle play/pause in cmus and display a notification with the current track title.
+-- - Next Track: Binds the XF86AudioNext key to skip to the next track in cmus and display a notification with the new track title.
+-- - Previous Track: Binds the XF86AudioPrev key to go back to the previous track in cmus and display a notification with the current track title.
+globalkeys = gears.table.join(
+	globalkeys,
+	awful.key({}, "XF86AudioLowerVolume", function ()
+		awful.spawn.easy_async("pactl set-sink-volume @DEFAULT_SINK@ -5%", function()
+			awful.spawn.easy_async_with_shell("pactl get-sink-volume @DEFAULT_SINK@", function(stdout)
+				local volume = stdout:match("(%d?%d?%d)%%")
+				naughty.notify({ title = "Volume", text = "Volume: " .. volume .. "%" })
+			end)
+		end)
+	end, {description = "lower volume", group = "audio"}),
+
+	awful.key({}, "XF86AudioRaiseVolume", function ()
+		awful.spawn.easy_async("pactl set-sink-volume @DEFAULT_SINK@ +5%", function()
+			awful.spawn.easy_async_with_shell("pactl get-sink-volume @DEFAULT_SINK@", function(stdout)
+				local volume = stdout:match("(%d?%d?%d)%%")
+				naughty.notify({ title = "Volume", text = "Volume: " .. volume .. "%" })
+			end)
+		end)
+	end, {description = "raise volume", group = "audio"}),
+
+	awful.key({}, "XF86AudioMute", function ()
+		awful.spawn.easy_async("pactl set-sink-mute @DEFAULT_SINK@ toggle", function()
+			awful.spawn.easy_async_with_shell("pactl get-sink-mute @DEFAULT_SINK@", function(stdout)
+				local mute = stdout:match("Mute: (%a+)")
+				naughty.notify({ title = "Volume", text = "Muted: " .. mute })
+			end)
+		end)
+	end, {description = "mute/unmute audio", group = "audio"})
+)
+globalkeys = gears.table.join(
+	globalkeys,
+	awful.key({}, "XF86AudioPlay", function ()
+		awful.spawn.easy_async_with_shell("pgrep cmus", function(stdout)
+			if stdout == "" then
+				-- cmus не е стартиран, стартираме го в нова tmux сесия
+				awful.spawn.with_shell("tmux new-session -d -s cmus_session 'cmus'")
+				-- Изчакваме малко, за да се стартира cmus в tmux сесията
+				gears.timer.start_new(0.5, function()
+					awful.spawn.with_shell("cmus-remote --pause")
+					naughty.notify({ title = "Music", text = "Started cmus in a tmux session and paused/played" })
+				end)
+			else
+				-- cmus вече работи, просто паузираме/пускаме
+				awful.spawn.with_shell("cmus-remote --pause")
+				awful.spawn.easy_async_with_shell("cmus-remote -Q | grep 'tag title' | cut -d ' ' -f 3-", function(stdout)
+					local title = stdout:match("^%s*(.-)%s*$") -- trim whitespace
+					naughty.notify({ title = "Music", text = "Paused/Played: " .. title })
+				end)
+			end
+		end)
+	end, {description = "play/pause music", group = "audio"}),
+
+	awful.key({}, "XF86AudioNext", function ()
+		-- Превъртаме към следващата песен
+		awful.spawn.with_shell("cmus-remote --next")
+		-- Изчакваме малко за да получим новата песен
+		gears.timer.start_new(0.5, function()
+			-- Извличаме информация за текущата песен с cmus-remote
+			awful.spawn.easy_async_with_shell("cmus-remote -Q", function(stdout)
+				local file_path = stdout:match("file (.-)\n")
+				local title = stdout:match("tag title (.-)\n") or "Unknown Title"
+				local artist = stdout:match("tag artist (.-)\n") or "Unknown Artist"
+				-- Извличаме обложката с ffmpeg
+				awful.spawn.easy_async_with_shell("ffmpeg -i '" .. file_path .. "' -an -vcodec copy -vf scale=iw/3:ih/3 /tmp/current_cover.jpg", function()
+					-- Показваме обложката с naughty.notify
+					naughty.notify({
+						title = "Now Playing",
+						text = artist .. " - " .. title,
+						icon = "/tmp/current_cover.jpg",
+						icon_size = 100,
+						timeout = 12,
+						padding = 10,    -- Падинг около съдържанието
+						margins = 15     -- Разстояние около цялата нотификация
+					})
+				end)
+			end)
+		end)
+	end, {description = "next track and show cover", group = "audio"}),
+
+	awful.key({}, "XF86AudioPrev", function ()
+		-- Превъртаме към предишната песен
+		awful.spawn.with_shell("cmus-remote --prev")
+		-- Изчакваме малко за да получим новата песен
+		gears.timer.start_new(0.5, function()
+			-- Извличаме информация за текущата песен с cmus-remote
+			awful.spawn.easy_async_with_shell("cmus-remote -Q", function(stdout)
+				local file_path = stdout:match("file (.-)\n")
+				local title = stdout:match("tag title (.-)\n") or "Unknown Title"
+				local artist = stdout:match("tag artist (.-)\n") or "Unknown Artist"
+				-- Извличаме обложката с ffmpeg
+				awful.spawn.easy_async_with_shell("ffmpeg -i '" .. file_path .. "' -an -vcodec copy -vf scale=iw/3:ih/3 /tmp/current_cover.jpg", function()
+					-- Показваме обложката с naughty.notify
+					naughty.notify({
+						title = "Now Playing",
+						text = artist .. " - " .. title,
+						icon = "/tmp/current_cover.jpg",
+						icon_size = 100,
+						timeout = 12,
+						padding = 10,    -- Падинг около съдържанието
+						margins = 30    -- Разстояние около цялата нотификация
+					})
+				end)
+			end)
+		end)
+	end, {description = "previous track and show cover", group = "audio"})
+)
+
+-- Set keys
+root.keys(globalkeys)
 
 -- Bind all key numbers to tags.
 -- Be careful: we use keycodes to make it work on any keyboard layout.
@@ -525,9 +651,13 @@ awful.rules.rules = {
 	-- Set code to always map on the tag named "3" on screen 1.
 	-- Set Gimp to always map on the tag named "4" on screen 1.
 	-- And so on.
-	{ rule = { instance = "google-chrome" }, properties = { tag = "󰖟 web" }, callback = function(c)
-		naughty.notify({ title = "Chrome", text = "Google Chrome has been started!" })
-	end },
+	{
+		rule = { instance = "google-chrome" },
+		properties = { tag = "󰖟 web" },
+		callback = function(c)
+			naughty.notify({ title = "Chrome", text = "Google Chrome has been started!" })
+		end,
+	},
 	{ rule = { class = "Firefox" }, properties = { tag = "󰖟 web" } },
 	{ rule = { class = "Code" }, properties = { tag = "󰅨 dev" } },
 	{ rule = { class = "Gimp" }, properties = { tag = " gfx" } },
@@ -585,7 +715,6 @@ client.connect_signal("request::titlebars", function(c)
 		layout = wibox.layout.align.horizontal,
 	})
 end)
-
 
 -- This script modifies the behavior of tags in the Awesome Window Manager to hide empty tags.
 -- It overrides certain functions and connects to various signals to update the visibility of tags based on their client content.

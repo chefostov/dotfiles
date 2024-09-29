@@ -28,7 +28,7 @@ MiscSearchDialogOpacity=100
 MiscShowUnsafePasteDialog=FALSE
 MiscRightClickAction=TERMINAL_RIGHT_CLICK_ACTION_CONTEXT_MENU
 ScrollingBar=TERMINAL_SCROLLBAR_NONE
-FontName=FiraCode Nerd Font weight=450 12
+FontName=Fixed Medium 12
 TitleInitial=%w
 TitleMode=TERMINAL_TITLE_REPLACE
 BackgroundMode=TERMINAL_BACKGROUND_TRANSPARENT

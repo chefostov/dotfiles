@@ -89,13 +89,25 @@ PS1='$(git_branch_status)\[\e[1m\]\W\[\e[0m\] \[\e[38;5;161m\]󱋴\[\e[0m\]  '
 #fi
 # unset color_prompt force_color_prompt
 
-# If this is an xterm set the title to user@host:dir
+# Function to format the full path with each directory in its own block
+format_path() {
+  local IFS='/'
+  local path_elements=($PWD)
+  local formatted_path=""
+  for element in "${path_elements[@]}"; do
+    formatted_path+="\[\e[38;5;235m\]\[\e[48;5;230m\] $element \[\e[0m\]"
+  done
+  echo -e "$formatted_path"
+}
+
+# If the terminal is xterm, set the title
 case "$TERM" in
-xterm* | rxvt*)
-  PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
-  ;;
-*) ;;
+  xterm* | rxvt*)
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+    ;;
+  *) ;;
 esac
+
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
@@ -103,7 +115,6 @@ if [ -x /usr/bin/dircolors ]; then
   alias ls='ls --color=auto'
   #alias dir='dir --color=auto'
   #alias vdir='vdir --color=auto'
-
   #alias grep='grep --color=auto'
   #alias fgrep='fgrep --color=auto'
   #alias egrep='egrep --color=auto'
@@ -118,6 +129,10 @@ alias ls='exa -a --color=always --group-directories-first --icons'
 alias most='cat $HOME/.local/share/bash/history| sort |uniq -c|sort -nr|head -n 10'
 alias meminfo='free -m -l -t'   # Показва информация за използваната памет
 alias duh='du -h --max-depth=1' # Показване на размера на директориите
+alias dotfiles='cd ~/repos/dotfiles'
+alias menos='less -R'
+export LESSOPEN="| /usr/share/source-highlight/src-hilite-lesspipe.sh %s"
+export LESS=' -R '
 
 # Търсене в bash историята
 hist_search() {

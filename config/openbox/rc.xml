@@ -23,6 +23,8 @@
     <raiseOnFocus>no</raiseOnFocus>
     <!-- when followMouse is enabled, and a window is given focus by moving the
        mouse into it, also raise the window -->
+    <raiseOnClick>no</raiseOnClick>
+
   </focus>
   <placement>
     <policy>Smart</policy>
